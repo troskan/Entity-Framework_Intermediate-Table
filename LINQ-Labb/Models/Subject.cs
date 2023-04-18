@@ -13,6 +13,7 @@ namespace LINQ_Labb.Models
         public int SubjectID { get; set; }
         [Required]
         public string Name { get; set; }
+        public int CourseID { get; set; }
         public Course Course { get; set; }
     }
 
