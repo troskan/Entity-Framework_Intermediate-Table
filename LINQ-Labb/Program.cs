@@ -1,6 +1,8 @@
 ﻿using LINQ_Labb.Data;
 using LINQ_Labb.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Metrics;
+using System.Security.Cryptography.X509Certificates;
 
 namespace LINQ_Labb
 {
@@ -9,25 +11,56 @@ namespace LINQ_Labb
         public static int CourseCounter = 3;
         static void Main(string[] args)
         {
-            //AddCourse("Mathemathics");
-            //AddSubject("Algebra",1);
-            // AddCourse("Programmering 2");
-            //AddSubject("Advanced .Net",2);
-            //AddCourse("Dancing");
-            //AddSubject("BoogieWoogie", 3);
-
-
-            //AddSubject("Algebra", 4);
-
-            AddSubject("Avancerad .Net", 5);
-
-            DisplayAllCourses();
             DisplayAllSubjects();
 
+
+            DisplayCoursesWithStudents();
+            DisplayAllCourses();
 
 
 
         }
+        private static void DisplayCoursesWithStudents()
+        {
+            using (var db = new Context())
+            {
+                var jTable = db.Course.Include(s => s.Student).ToList();
+
+                foreach (var c in jTable)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("****************************************");
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"ID:{c.CourseID} Course: {c.Name}");
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("****************************************");
+                    Console.ForegroundColor = ConsoleColor.White;
+
+                    foreach (var s in c.Student)
+                    {
+                        Console.WriteLine($"ID: {s.StudentID} Name: {s.FirstName} {s.LastName}");
+                    }
+                }
+                
+
+               
+            }
+        }
+        private static void AddManyStudentsToCourse(int startIndex, int stopIndex, int courseID)
+        {
+            Context db = new Context();
+            var students = db.Student;
+            int counter = 0;
+
+            for (int i = startIndex; i <= stopIndex; i++)
+            {
+                Console.WriteLine($"Added StudentID #{i}");
+                AddStudentToCourse(courseID, i);
+                counter++;
+            }
+            Console.WriteLine($"Attempt to add {counter} students has been made and is finished.");
+        }
+
         public static void DisplayAllCourses()
         {
             Context db = new Context();
@@ -42,12 +75,15 @@ namespace LINQ_Labb
         public static void DisplayAllSubjects()
         {
             Context db = new Context();
-            var subjects = db.Subject.ToList();
+            var subjects = db.Subject.Include(c=>c.Course).ToList();
             Console.WriteLine("************************");
             Console.WriteLine("Displaying all subjects registered in school.");
+            var courseName = "";
+            
+
             foreach (var c in subjects)
             {
-                Console.WriteLine($"#{c.SubjectID} Course: {c.Name}");
+                Console.WriteLine($"#{c.SubjectID} Subject: {c.Name} - CourseID: {c.CourseID} Course: {c.Name}");
             }
         }
         public static void DisplayAll()
@@ -104,8 +140,6 @@ namespace LINQ_Labb
             db.Course.Add(course);
             db.SaveChanges();
 
-            CourseCounter++; //Increment course counter by 1 to keep track of index for subject.
-
             Console.WriteLine($"#{course.CourseID} {courseName} was added successfully!");
         }
         public static void AddSubject(string subjectName, int courseID)
@@ -118,11 +152,38 @@ namespace LINQ_Labb
             subject.Name = subjectName;
             subject.CourseID = courseID;
             subject.Course = courseObj;
-           // subject.CourseID = 10;
-
-
+            
             db.Subject.Add(subject);
             db.SaveChanges();
+
+        }
+
+        public static string AddStudentToCourse(int courseID, int studentID)
+        {
+            using (var db = new Context())
+            {
+                var selectCourse = db.Course.FirstOrDefault(x => x.CourseID == courseID);
+
+                var student = db.Student.FirstOrDefault(s => s.StudentID == studentID);
+
+
+                if (db.Student.Contains(db.Student.FirstOrDefault(s => s.StudentID == studentID)))
+                {
+                    selectCourse.Student = new List<Student> { student };
+
+
+                    db.SaveChanges();
+                    Console.WriteLine($"Sucessfully added Student: ID# {student.StudentID}, Name: {student.FirstName}");
+                    return "Successfully added.";
+                }
+
+                Console.WriteLine($"Could not add Student: ID# {student.StudentID}, Name: {student.FirstName}");
+
+                return "Error, could not add.";
+
+            }
+
+
 
         }
         public static void DeleteSubject(int subjectID)

@@ -15,6 +15,7 @@ namespace LINQ_Labb.Models
         public string FirstName { get; set; }
         [Required]
         public string LastName { get; set; }
+
         public ICollection<Course> Course { get; set; }
 
     }
