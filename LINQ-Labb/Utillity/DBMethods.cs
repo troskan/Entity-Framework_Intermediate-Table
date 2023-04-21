@@ -3,6 +3,7 @@ using LINQ_Labb.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,222 @@ namespace LINQ_Labb.Utillity
 {
     internal class DBMethods
     {
+        public static void ChangeAnasToReidar(string removeTeacher)
+        {
+            int courseID = 0;
+            int oldTeacherID = 0;
+            int newTeacherID = 0;
+
+
+            if (removeTeacher == "Anas")
+            {
+                courseID = 4;
+                oldTeacherID = 1;
+                newTeacherID = 3;
+                EditTeacherForCourse(courseID, oldTeacherID, newTeacherID);
+                Console.WriteLine("Reidar is now teacher.");
+            }
+
+            else if (removeTeacher == "Reidar")
+            {
+                courseID = 4;
+                oldTeacherID = 3;
+                newTeacherID = 1;
+                EditTeacherForCourse(courseID, oldTeacherID, newTeacherID);
+                Console.WriteLine("Anas is now teacher.");
+
+            }
+            else
+            {
+                Console.WriteLine("No teacher added.");
+            }
+
+
+        }
+        public static void EditTeacherForCourse(int courseID, int oldTeacherID, int newTeacherID)
+        {
+            using (var db = new Context())
+            {
+                var course = db.Course.Include(c => c.Teacher).FirstOrDefault(c => c.CourseID == courseID);
+
+                var oldTeacher = course.Teacher.FirstOrDefault(t => t.TeacherID == oldTeacherID);
+
+                if (oldTeacher == null)
+                {
+                    Console.WriteLine($"Teacher with ID {oldTeacherID} is not associated with course {courseID}.");
+                    return;
+                }
+
+                var newTeacher = db.Teacher.FirstOrDefault(t => t.TeacherID == newTeacherID);
+
+                if (newTeacher == null)
+                {
+                    Console.WriteLine($"Teacher with ID {newTeacherID} does not exist.");
+                    return;
+                }
+
+                course.Teacher.Remove(oldTeacher);
+                course.Teacher.Add(newTeacher);
+
+                db.SaveChanges();
+
+                Console.WriteLine($"Teacher with ID {oldTeacherID} has been replaced with teacher with ID {newTeacherID} for course {courseID}.");
+            }
+        }
+
+        public static void EditCourseName(string courseName, string newCourseName)
+
+        {
+            using (var db = new Context())
+            {
+                var selectCourse = db.Course.FirstOrDefault(c => c.Name == courseName);
+
+                if (selectCourse.Name.Contains(courseName))
+                {
+                    Course course = selectCourse;
+
+                    course.Name = newCourseName;
+
+                    db.SaveChanges();
+
+                    Console.WriteLine("Name found! Course name has been changed!");
+                }
+                else
+                {
+                    Console.WriteLine("Did not find course name, no changes have been made.");
+                }
+
+
+            }
+            }
+            public static void CourseNameExist(string courseName)
+        {
+            using (var db = new Context())
+            {
+                var course = db.Course.Any(s => s.Name == courseName);
+                if (course)
+                {
+                    Console.WriteLine($"{courseName} does exist in subjects!");
+                }
+                else
+                {
+                    Console.WriteLine($"{courseName} does not in subjects!");
+
+                }
+            }
+        }
+
+        public static void GetAllTeachersWithStudent()
+        {
+            using (var db = new Context())
+            {
+                var course = db.Course.Include(x => x.Student).Include(t => t.Teacher).ToList();
+
+                foreach (var i in course)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine();
+                    Console.WriteLine($"\t Course: {i.Name}");
+                    Console.WriteLine();
+                    Console.WriteLine();
+
+                    foreach (var s in i.Student)
+                    {
+                        if (s.FirstName.Length != 10)
+                        {
+                            for (int c = s.FirstName.Length; c != 10; c++)
+                            {
+                                s.FirstName += " ";
+                            }
+                        }
+                        Console.Write($"Student: {s.FirstName}  Teachers: ");
+
+                        foreach (var c in i.Teacher)
+                        {
+                            Console.Write($"{c.FirstName} ");
+                        }
+
+                        Console.WriteLine();
+                    }
+                }
+            }
+        }
+        //public static void AddTeacherToCourse(int courseID, int teacherID)
+        //{
+        //    using (var db = new Context())
+        //    {
+        //        var selectCourse = db.Course.FirstOrDefault(c => c.CourseID == courseID);
+
+        //        var selectTeacher = db.Teacher.FirstOrDefault(t => t.TeacherID == teacherID);
+
+        //        selectCourse.Teacher = new List<Teacher>()
+        //        {
+        //            selectTeacher
+        //        };
+
+        //        db.SaveChanges();
+        //    }
+        //}
+
+        //public static void RemoveTeacherInCourse(int teacherID)
+        //{
+        //    //using(var db = new Context())
+        //    //{
+        //    //    var select = db.Course.Include(c => c.Teacher).ToList();
+
+        //    //    select.RemoveAll(x => x.CourseID != 0);
+        //    //    select.
+
+
+        //    //    db.SaveChanges();
+
+        //    //}
+        //}
+        public static void ChangeAllTeacherName(string oldName, string newName)
+        {
+            using (var db = new Context())
+            {
+                var selectTeacher = db.Teacher.FirstOrDefault(t => t.FirstName == oldName);
+
+                Teacher editTeacher = selectTeacher;
+
+                editTeacher.FirstName = newName;
+
+                db.SaveChanges();
+
+            }
+        }
+        public static void GetAllCourseTeachers()
+        {
+            using (var db = new Context())
+            {
+                var course = db.Course.Include(t => t.Teacher).ToList();
+
+                foreach (var c in course)
+                {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("****************************************");
+                    Console.ForegroundColor = ConsoleColor.Red;
+
+
+                    Console.WriteLine($"ID:{c.CourseID} Course: {c.Name}");
+
+
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("****************************************");
+                    Console.ForegroundColor = ConsoleColor.White;
+                    Console.WriteLine();
+
+                    foreach (var t in c.Teacher)
+                    {
+                        Console.WriteLine($"ID:{t.TeacherID} Name: {t.FirstName} {t.LastName}");
+                        Console.WriteLine();
+                    }
+                }
+
+            }
+        }
+
         public static void DisplayCoursesWithStudents()
         {
             using (var db = new Context())
@@ -69,6 +286,7 @@ namespace LINQ_Labb.Utillity
             var subjects = db.Subject.Include(c => c.Course).ToList();
             Console.WriteLine("************************");
             Console.WriteLine("Displaying all subjects registered in school.");
+            Console.WriteLine();
             var courseName = "";
 
 
@@ -155,10 +373,8 @@ namespace LINQ_Labb.Utillity
         {
             using (var db = new Context())
             {
-                var selectCourse = db.Course.FirstOrDefault(x => x.CourseID == courseID);
-
                 var student = db.Student.FirstOrDefault(s => s.StudentID == studentID);
-
+                var selectCourse = db.Course.FirstOrDefault(c => c.CourseID == courseID);
 
                 if (db.Student.Contains(db.Student.FirstOrDefault(s => s.StudentID == studentID)))
                 {
@@ -177,36 +393,6 @@ namespace LINQ_Labb.Utillity
 
                 return "Error, could not add.";
 
-            }
-
-
-
-        }
-        public static string AddTeacherToCourse(int courseID, int teacherID)
-        {
-            using (Context db = new Context())
-            {
-                Course selectCourse = db.Course.FirstOrDefault(x => x.CourseID == courseID);
-
-                Teacher teacher = db.Teacher.FirstOrDefault(s => s.TeacherID == teacherID);
-
-
-                if (db.Teacher.Contains(db.Teacher.FirstOrDefault(s => s.TeacherID == teacherID)))
-                {
-                    selectCourse.Teacher = new List<Teacher>
-                    {
-                        teacher
-                    };
-
-
-                    db.SaveChanges();
-                    Console.WriteLine($"Sucessfully added Teacher: ID# {teacher.TeacherID}, Name: {teacher.FirstName}");
-                    return "Successfully added.";
-                }
-
-                Console.WriteLine($"Could not add Teacher: ID# {teacher.TeacherID}, Name: {teacher.FirstName}");
-
-                return "Error, could not add.";
 
             }
 
